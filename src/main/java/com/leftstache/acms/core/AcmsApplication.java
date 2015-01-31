@@ -6,18 +6,22 @@ import com.leftstache.acms.core.utils.ReflectionUtils;
 import org.reflections.*;
 
 import java.beans.*;
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
 /**
  * @author Joel Johnson
  */
-public class AcmsApplication<T> {
+public class AcmsApplication<T> implements Closeable, AutoCloseable {
 	private final Class<T> applicationClass;
 	private final Collection<String> externalPackages;
 	private final T application;
 	private final BeanIndexer beanIndexer;
 	private List<BeanListener> beanListeners;
+
+	private volatile boolean started = false;
+	private final Object $lock$ = new Object();
 
 	public AcmsApplication(Class<T> applicationClass, BeanIndexer beanIndexer, Collection<String> externalPackages) {
 		this.applicationClass = applicationClass;
@@ -43,11 +47,46 @@ public class AcmsApplication<T> {
 
 		AcmsApplication acmsApplication;
 		acmsApplication = new AcmsApplication(applicationClass, new BeanIndexerImpl(), externalPackages);
-		acmsApplication.start();
+		acmsApplication.initialize();
 		return acmsApplication;
 	}
 
-	void start() {
+	/**
+	 * Starts the app. This method returns after {@link #close()} is called.
+	 */
+	public void start() {
+		if(!started) {
+			synchronized ($lock$) {
+				if(!started) {
+					started = true;
+					try {
+						Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+						$lock$.wait();
+					} catch (InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Must be called after {@link #start()}. Will allow the {@link #start()} method to return.
+	 */
+	public void close() {
+		if(started) {
+			synchronized ($lock$) {
+				if(started) {
+					$lock$.notifyAll();
+					started = false;
+				}
+			}
+		} else {
+			throw new AcmsException("Cannot call close before start");
+		}
+	}
+
+	void initialize() {
 		loadExternalObjects();
 
 		Collection<Method> declaredMethodsRecursively = ReflectionUtils.findDeclaredMethodsRecursively(applicationClass, m -> m.getAnnotation(Inject.class) != null);
