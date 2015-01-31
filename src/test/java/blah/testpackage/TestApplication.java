@@ -21,4 +21,9 @@ public class TestApplication {
 	public String someDependantValue(String someValue, String byname) {
 		return someValue + " " + byname;
 	}
+
+	@Inject("someValue")
+	public int someIntValue() {
+		return 10;
+	}
 }

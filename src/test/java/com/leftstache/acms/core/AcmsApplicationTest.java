@@ -14,8 +14,9 @@ public class AcmsApplicationTest {
 		AcmsApplication app = AcmsApplication.run(TestApplication.class);
 		BeanIndexer beanIndexer = app.getBeanIndexer();
 
-		assertEquals("inject by method name", "this is an injected string", beanIndexer.getBeanByName("someValue"));
-		assertEquals("inject by annotation value", "this is by name", beanIndexer.getBeanByName("byname"));
-		assertEquals("inject with dependencies", "this is an injected string this is by name", beanIndexer.getBeanByName("someDependantValue"));
+		assertEquals("inject by method name", "this is an injected string", beanIndexer.getBean(String.class, "someValue"));
+		assertEquals("inject by annotation value", "this is by name", beanIndexer.getBean(String.class, "byname"));
+		assertEquals("inject with dependencies", "this is an injected string this is by name", beanIndexer.getBean(String.class, "someDependantValue"));
+		assertEquals("inject duplicate by type", 10, beanIndexer.getBean(int.class, "someValue"));
 	}
 }

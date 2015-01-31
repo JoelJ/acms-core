@@ -94,7 +94,7 @@ public class AcmsApplication<T> {
 			for (int i = 0; i < parametersDefs.length; i++) {
 				Parameter parameterDef = parametersDefs[i];
 				String parameterName = parameterDef.getName();
-				Object bean = beanIndexer.getBeanByName(parameterName);
+				Object bean = beanIndexer.getBean(parameterDef.getType(), parameterName);
 				if (bean == null) {
 					return false; // Uh-oh, we don't have that value yet! Defer until later. Hopefully we'll create it soon!
 				}

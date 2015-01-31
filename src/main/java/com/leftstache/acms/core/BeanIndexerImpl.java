@@ -6,10 +6,10 @@ import java.util.*;
  * @author Joel Johnson
  */
 class BeanIndexerImpl implements BeanIndexer {
-	private Map<String, Object> byName;
+	private final Map<Class<?>, Map<String, Object>> index;
 
 	BeanIndexerImpl() {
-		this.byName = new HashMap<>();
+		this.index = new HashMap<>();
 	}
 
 	@Override
@@ -24,11 +24,21 @@ class BeanIndexerImpl implements BeanIndexer {
 			throw new NullPointerException("name");
 		}
 
+		Map<String, Object> byName = index.get(type);
+		if(byName == null) {
+			byName = new HashMap<>();
+			index.put(type, byName);
+		}
+
 		byName.put(name, bean);
 	}
 
 	@Override
-	public Object getBeanByName(String name) {
-		return byName.get(name);
+	public Object getBean(Class<?> type, String name) {
+		Map<String, Object> byName = index.get(type);
+		if(byName != null) {
+			return byName.get(name);
+		}
+		return null;
 	}
 }
