@@ -4,6 +4,7 @@ import blah.testpackage.*;
 import org.junit.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Joel Johnson
@@ -28,6 +29,7 @@ public class AcmsApplicationTest {
 		BeanIndexer beanIndexer = app.getBeanIndexer();
 
 		ComplexObject complexObject = beanIndexer.getBean(ComplexObject.class, "complexObject");
+		assertNotNull("actual object", complexObject);
 		assertEquals("int value", 10, complexObject.getSomeIntValue());
 		assertEquals("string value", "someValue", complexObject.getSomeIntValue());
 	}
