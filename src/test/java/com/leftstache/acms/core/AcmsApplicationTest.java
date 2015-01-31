@@ -11,11 +11,11 @@ import static org.junit.Assert.assertEquals;
 public class AcmsApplicationTest {
 	@Test
 	public void application_beans() {
-		AcmsApplication run = AcmsApplication.run(TestApplication.class);
-		BeanIndexer beanIndexer = run.getBeanIndexer();
+		AcmsApplication app = AcmsApplication.run(TestApplication.class);
+		BeanIndexer beanIndexer = app.getBeanIndexer();
 
-		assertEquals("this is an injected string", beanIndexer.getBeanByName("someValue"));
-		assertEquals("this is by name", beanIndexer.getBeanByName("byname"));
-		assertEquals("this is an injected string this is by name", beanIndexer.getBeanByName("someDependantValue"));
+		assertEquals("inject by method name", "this is an injected string", beanIndexer.getBeanByName("someValue"));
+		assertEquals("inject by annotation value", "this is by name", beanIndexer.getBeanByName("byname"));
+		assertEquals("inject with dependencies", "this is an injected string this is by name", beanIndexer.getBeanByName("someDependantValue"));
 	}
 }

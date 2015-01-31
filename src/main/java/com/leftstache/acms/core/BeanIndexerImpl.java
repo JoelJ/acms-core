@@ -13,7 +13,7 @@ class BeanIndexerImpl implements BeanIndexer {
 	}
 
 	@Override
-	public <T, B extends T> void index(Class<T> type, B bean, String name) {
+	public void index(Class<?> type, Object bean, String name) {
 		if(type == null) {
 			throw new NullPointerException("type");
 		}
