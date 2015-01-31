@@ -26,4 +26,9 @@ public class TestApplication {
 	public int someIntValue() {
 		return 10;
 	}
+
+	@Inject
+	public ComplexObject complexObject() {
+		return new ComplexObject();
+	}
 }

@@ -34,10 +34,10 @@ class BeanIndexerImpl implements BeanIndexer {
 	}
 
 	@Override
-	public Object getBean(Class<?> type, String name) {
+	public <T> T getBean(Class<T> type, String name) {
 		Map<String, Object> byName = index.get(type);
 		if(byName != null) {
-			return byName.get(name);
+			return (T)byName.get(name);
 		}
 		return null;
 	}

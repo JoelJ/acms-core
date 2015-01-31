@@ -9,5 +9,5 @@ import java.util.*;
 public interface BeanIndexer {
 	void index(Class<?> type, Object bean, String name);
 
-	Object getBean(Class<?> type, String name);
+	<T> T getBean(Class<T> type, String name);
 }

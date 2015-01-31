@@ -2,7 +2,7 @@ package com.leftstache.acms.core.annotation;
 
 import java.lang.annotation.*;
 
-import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
@@ -10,7 +10,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention (RUNTIME)
-@Target({METHOD})
+@Target({METHOD, FIELD})
 public @interface Inject {
 	String value() default "";
 }
