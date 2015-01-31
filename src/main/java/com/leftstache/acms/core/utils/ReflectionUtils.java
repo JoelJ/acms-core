@@ -1,9 +1,12 @@
 package com.leftstache.acms.core.utils;
 
 import com.google.common.collect.*;
+import com.leftstache.acms.core.exception.*;
 import jdk.nashorn.internal.ir.annotations.*;
 
+import java.io.*;
 import java.lang.reflect.*;
+import java.net.*;
 import java.util.*;
 import java.util.function.*;
 
@@ -47,5 +50,32 @@ public class ReflectionUtils {
 		}
 
 		return ImmutableList.copyOf(allDeclaredFields);
+	}
+
+	public static Collection<String> findInjectedPackages() {
+		Set<String> result = new HashSet<>();
+
+		Enumeration<URL> resources;
+		try {
+			resources = ReflectionUtils.class.getClassLoader().getResources("injected.acms");
+		} catch (IOException e) {
+			throw new ReflectionException("Unable to load injected.acms resources", e);
+		}
+
+		while(resources.hasMoreElements()) {
+			URL url = resources.nextElement();
+			try(InputStream inputStream = url.openStream()) {
+				try(Scanner scanner = new Scanner(inputStream)) {
+					while (scanner.hasNextLine()) {
+						String line = scanner.nextLine();
+						result.add(line);
+					}
+				}
+			} catch (IOException e) {
+				throw new ReflectionException("Unable to open stream for " + url, e);
+			}
+		}
+
+		return ImmutableSet.copyOf(result);
 	}
 }

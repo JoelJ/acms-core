@@ -1,6 +1,7 @@
 package com.leftstache.acms.core;
 
 import blah.testpackage.*;
+import foo.anotherpackage.*;
 import org.junit.*;
 
 import static org.junit.Assert.assertEquals;
@@ -46,5 +47,26 @@ public class AcmsApplicationTest {
 
 		Bean<ComplexObject> complexObject = beanIndexer.getBean(ComplexObject.class, "complexObject");
 		assertEquals("value set OnInitialize", "initialized", complexObject.getInstance().getInitializedOnInit());
+	}
+
+	@Test
+	public void application_externalBean() {
+		AcmsApplication app = AcmsApplication.run(TestApplication.class);
+		BeanIndexer beanIndexer = app.getBeanIndexer();
+
+		Bean<TestAutoConfiguredImpl> autoConfiguredBean = beanIndexer.getBean(TestAutoConfiguredImpl.class, "testAutoConfiguredImpl");
+		assertEquals("value set OnInitialize", "initialized", autoConfiguredBean.getInstance().getOnInitializedValue());
+
+		Bean<String> autoConfiguredString = beanIndexer.getBean(String.class, "someAutoConfiguredValue");
+		assertEquals("method bean", autoConfiguredString.getInstance(), "some autoconfigured value");
+	}
+
+	@Test
+	public void application_includesExternal() {
+		AcmsApplication app = AcmsApplication.run(TestApplication.class);
+		BeanIndexer beanIndexer = app.getBeanIndexer();
+
+		Bean<String> autoConfiguredString = beanIndexer.getBean(String.class, "includesExternal");
+		assertEquals("includes external bean", autoConfiguredString.getInstance(), "includes external some autoconfigured value");
 	}
 }

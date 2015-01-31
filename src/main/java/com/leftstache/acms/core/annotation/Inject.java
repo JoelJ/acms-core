@@ -10,7 +10,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention (RUNTIME)
-@Target({METHOD, FIELD})
+@Target({TYPE, METHOD, FIELD})
 public @interface Inject {
 	String value() default "";
 }

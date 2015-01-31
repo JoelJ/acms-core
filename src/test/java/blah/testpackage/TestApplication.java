@@ -31,4 +31,9 @@ public class TestApplication {
 	public ComplexObject complexObject() {
 		return new ComplexObject();
 	}
+
+	@Inject
+	public String includesExternal(String someAutoConfiguredValue) {
+		return "includes external " + someAutoConfiguredValue;
+	}
 }

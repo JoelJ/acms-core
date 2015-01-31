@@ -3,7 +3,10 @@ package com.leftstache.acms.core;
 import com.leftstache.acms.core.annotation.*;
 import com.leftstache.acms.core.exception.*;
 import com.leftstache.acms.core.utils.ReflectionUtils;
+import javafx.scene.effect.*;
+import org.reflections.*;
 
+import java.beans.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -12,11 +15,13 @@ import java.util.*;
  */
 public class AcmsApplication<T> {
 	private final Class<T> applicationClass;
+	private final Collection<String> externalPackages;
 	private final T application;
 	private final BeanIndexer beanIndexer;
 
-	public AcmsApplication(Class<T> applicationClass, BeanIndexer beanIndexer) {
+	public AcmsApplication(Class<T> applicationClass, BeanIndexer beanIndexer, Collection<String> externalPackages) {
 		this.applicationClass = applicationClass;
+		this.externalPackages = externalPackages;
 		try {
 			this.application = applicationClass.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -34,18 +39,22 @@ public class AcmsApplication<T> {
 			throw new AcmsException("Unabled to initialize app not annotated with AutoConfiguredApp");
 		}
 
+		Collection<String> externalPackages = ReflectionUtils.findInjectedPackages();
+
 		AcmsApplication acmsApplication;
-		acmsApplication = new AcmsApplication(applicationClass, new BeanIndexerImpl());
+		acmsApplication = new AcmsApplication(applicationClass, new BeanIndexerImpl(), externalPackages);
 		acmsApplication.start();
 		return acmsApplication;
 	}
 
 	void start() {
+		loadExternallyInjectedBeans();
+
 		Collection<Method> declaredMethodsRecursively = ReflectionUtils.findDeclaredMethodsRecursively(applicationClass, m -> m.getAnnotation(Inject.class) != null);
 
 		// Index all the method-declared beans
 		try {
-			indexMethods(declaredMethodsRecursively);
+			indexMethods(declaredMethodsRecursively, application);
 		} catch (InvocationTargetException | IllegalAccessException e) {
 			throw new ReflectionException("Exception while creating beans from methods", e);
 		}
@@ -55,6 +64,45 @@ public class AcmsApplication<T> {
 
 		// Done injecting! Fire all the OnInitialized methods.
 		fireOnInitialized();
+	}
+
+	private void loadExternallyInjectedBeans() {
+		for (String externalPackage : externalPackages) {
+			Reflections reflections = new Reflections(externalPackage);
+			Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(Inject.class);
+
+			for (Class<?> annotatedType : typesAnnotatedWith) {
+				indexType(annotatedType);
+			}
+		}
+	}
+
+	private void indexType(Class<?> type) {
+		assert type.getAnnotation(Inject.class) != null;
+
+		Inject annotation = type.getAnnotation(Inject.class);
+		String name;
+		if(annotation.value().isEmpty()) {
+			name = Introspector.decapitalize(type.getSimpleName());
+		} else {
+			name = annotation.value();
+		}
+
+		Object instance;
+		try {
+			instance = type.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new ReflectionException("Unable to create instance of external bean " + type, e);
+		}
+
+		beanIndexer.index(type, instance, name);
+
+		Collection<Method> declaredMethodsRecursively = ReflectionUtils.findDeclaredMethodsRecursively(instance.getClass(), m -> m.getAnnotation(Inject.class) != null);
+		try {
+			indexMethods(declaredMethodsRecursively, instance);
+		} catch (InvocationTargetException | IllegalAccessException e) {
+			throw new ReflectionException("Unable to index bean methods for external bean " + type, e);
+		}
 	}
 
 	private void fireOnInitialized() {
@@ -90,10 +138,10 @@ public class AcmsApplication<T> {
 		}
 	}
 
-	private void indexMethods(Collection<Method> methods) throws InvocationTargetException, IllegalAccessException {
+	private void indexMethods(Collection<Method> methods, Object instance) throws InvocationTargetException, IllegalAccessException {
 		List<Method> deferredMethods = new ArrayList<>();
 		for (Method method : methods) {
-			if(!indexMethod(method)) {
+			if(!indexMethod(method, instance)) {
 				deferredMethods.add(method);
 			}
 		}
@@ -103,7 +151,7 @@ public class AcmsApplication<T> {
 			List<Method> previouslyDeferred = deferredMethods;
 			deferredMethods = new ArrayList<>();
 			for (Method deferredMethod : previouslyDeferred) {
-				if(!indexMethod(deferredMethod)) {
+				if(!indexMethod(deferredMethod, instance)) {
 					deferredMethods.add(deferredMethod);
 				}
 			}
@@ -122,7 +170,7 @@ public class AcmsApplication<T> {
 		}
 	}
 
-	private boolean indexMethod(Method method) throws InvocationTargetException, IllegalAccessException {
+	private boolean indexMethod(Method method, Object instance) throws InvocationTargetException, IllegalAccessException {
 		Parameter[] parametersDefs = method.getParameters();
 
 		Object[] parameterValues;
@@ -141,7 +189,7 @@ public class AcmsApplication<T> {
 			}
 		}
 
-		Object bean = method.invoke(application, parameterValues);
+		Object bean = method.invoke(instance, parameterValues);
 
 		String beanName = method.getName();
 		Inject inject = method.getAnnotation(Inject.class);
