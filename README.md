@@ -32,6 +32,6 @@ Setup
         <groupId>com.leftstache.acms</groupId>
         <artifactId>acms-core</artifactId>
         <version>1.0-SNAPSHOT</version>
-    </dependency
+    </dependency>
  ```
 
