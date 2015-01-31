@@ -27,6 +27,23 @@ public class AcmsApplicationTest {
 	}
 
 	@Test
+	public void testApplication_injectableIndexing() throws InstantiationException, IllegalAccessException {
+		InjectorStub injector = new InjectorStub();
+		AcmsApplication acmsApplication = new AcmsApplication(
+			TestApplication.class,
+			injector,
+			Arrays.asList("blah.testpackage")
+		);
+
+		acmsApplication.start(); // this will find all the injectables and index them.
+
+		assertNotNull(injector.getBean("testInjectable"));
+		assertNotNull(injector.getBean("byname"));
+		assertTrue(injector.getBean("testInjectable") instanceof TestInjectable);
+		assertTrue(injector.getBean("byname") instanceof TestInjectableByName);
+	}
+
+	@Test
 	public void testApplication_resourceScanning() {
 		AcmsApplication acmsApplication = AcmsApplication.run(TestApplication.class);
 		Set<Class<? extends AutoConfigureListener>> autoconfiguredTypes = acmsApplication.getAutoconfiguredTypes();

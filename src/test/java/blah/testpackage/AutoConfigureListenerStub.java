@@ -13,6 +13,6 @@ public class AutoConfigureListenerStub implements AutoConfigureListener {
 
 	@Override
 	public <T> T autoConfiguredClassInitialized(T autoConfiguredObject, String name) {
-		return null;
+		return autoConfiguredObject;
 	}
 }
