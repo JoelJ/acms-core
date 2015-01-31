@@ -1,6 +1,5 @@
 package com.leftstache.acms.core;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 /**

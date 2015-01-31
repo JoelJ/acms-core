@@ -27,5 +27,5 @@ public interface BeanListener {
 	 * Called after the given bean is registered and the bean's @OnInitialized methods are called.
 	 * @param bean The registered bean.
 	 */
-	default void postInjected(Bean<?> bean) {};
+	default void postInjected(Bean<?> bean) {}
 }
