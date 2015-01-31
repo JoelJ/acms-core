@@ -7,5 +7,18 @@ import com.leftstache.acms.core.annotation.*;
  */
 @AutoConfiguredApp
 public class TestApplication {
+	@Inject
+	public String someValue() {
+		return "this is an injected string";
+	}
 
+	@Inject("byname")
+	public String someValueByName() {
+		return "this is by name";
+	}
+
+	@Inject
+	public String someDependantValue(String someValue, String someValueByName) {
+		return someValue + " " + someValueByName;
+	}
 }
