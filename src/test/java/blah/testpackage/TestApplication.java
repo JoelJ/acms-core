@@ -18,7 +18,7 @@ public class TestApplication {
 	}
 
 	@Inject
-	public String someDependantValue(String someValue, String someValueByName) {
-		return someValue + " " + someValueByName;
+	public String someDependantValue(String someValue, String byname) {
+		return someValue + " " + byname;
 	}
 }
