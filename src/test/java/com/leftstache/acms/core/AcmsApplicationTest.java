@@ -4,8 +4,7 @@ import blah.testpackage.*;
 import foo.anotherpackage.*;
 import org.junit.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Joel Johnson
@@ -68,5 +67,33 @@ public class AcmsApplicationTest {
 
 		Bean<String> autoConfiguredString = beanIndexer.getBean(String.class, "includesExternal");
 		assertEquals("includes external bean", autoConfiguredString.getInstance(), "includes external some autoconfigured value");
+
+		Bean<TestAutoConfiguredImplCustomName> autoConfiguredObject = beanIndexer.getBean(TestAutoConfiguredImplCustomName.class, "bacon");
+		assertNotNull("includes external bean with custom name", autoConfiguredObject);
+		assertNotNull("includes external bean with custom name", autoConfiguredObject.getInstance());
+	}
+
+	@Test
+	public void application_listeners() {
+		AcmsApplication app = AcmsApplication.run(TestApplication.class);
+		BeanIndexer beanIndexer = app.getBeanIndexer();
+
+		Bean<TestBeanListener> testBeanListenerBean = beanIndexer.getBean(TestBeanListener.class);
+		TestBeanListener testBeanListener = testBeanListenerBean.getInstance();
+
+		// standard injected objects should have all three events fired
+		assertTrue("ComplexObject event", testBeanListener.hasPreInitialized("complexObject"));
+		assertTrue("ComplexObject event", testBeanListener.hasPostInitialized("complexObject"));
+		assertTrue("ComplexObject event", testBeanListener.hasPostInjected("complexObject"));
+
+		// BeanListeners only have the PostInjected events fired
+		assertFalse("BeanListener event", testBeanListener.hasPreInitialized("testBeanListener"));
+		assertFalse("BeanListener event", testBeanListener.hasPostInitialized("testBeanListener"));
+		assertTrue("BeanListener event", testBeanListener.hasPostInjected("testBeanListener"));
+
+		// BeanIndexer only have the PostInjected events fired
+		assertFalse("BeanIndexer event", testBeanListener.hasPreInitialized("beanIndexer"));
+		assertFalse("BeanIndexer event", testBeanListener.hasPostInitialized("beanIndexer"));
+		assertTrue("BeanIndexer event", testBeanListener.hasPostInjected("beanIndexer"));
 	}
 }

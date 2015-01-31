@@ -12,6 +12,7 @@ class BeanIndexerImpl implements BeanIndexer {
 
 	BeanIndexerImpl() {
 		this.index = new HashMap<>();
+		this.index(BeanIndexer.class, this, "beanIndexer");
 	}
 
 	@Override
@@ -32,7 +33,21 @@ class BeanIndexerImpl implements BeanIndexer {
 			index.put(type, byName);
 		}
 
-		byName.put(name, new Bean(name, type, bean));
+		Bean result = new Bean(name, type, bean);
+		byName.put(name, result);
+	}
+
+	@Override
+	public <T> Bean<T> getBean(Class<T> type) {
+		Bean<T> result = null;
+		Map<String, Bean<?>> byName = index.get(type);
+		if(byName != null) {
+			Iterator<Bean<?>> iterator = byName.values().iterator();
+			if(iterator.hasNext()) {
+				result = (Bean<T>) iterator.next();
+			}
+		}
+		return result;
 	}
 
 	@Override

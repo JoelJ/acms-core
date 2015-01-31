@@ -3,7 +3,6 @@ package com.leftstache.acms.core;
 import com.leftstache.acms.core.annotation.*;
 import com.leftstache.acms.core.exception.*;
 import com.leftstache.acms.core.utils.ReflectionUtils;
-import javafx.scene.effect.*;
 import org.reflections.*;
 
 import java.beans.*;
@@ -18,6 +17,7 @@ public class AcmsApplication<T> {
 	private final Collection<String> externalPackages;
 	private final T application;
 	private final BeanIndexer beanIndexer;
+	private List<BeanListener> beanListeners;
 
 	public AcmsApplication(Class<T> applicationClass, BeanIndexer beanIndexer, Collection<String> externalPackages) {
 		this.applicationClass = applicationClass;
@@ -48,7 +48,7 @@ public class AcmsApplication<T> {
 	}
 
 	void start() {
-		loadExternallyInjectedBeans();
+		loadExternalObjects();
 
 		Collection<Method> declaredMethodsRecursively = ReflectionUtils.findDeclaredMethodsRecursively(applicationClass, m -> m.getAnnotation(Inject.class) != null);
 
@@ -63,18 +63,47 @@ public class AcmsApplication<T> {
 		indexNestedInjected();
 
 		// Done injecting! Fire all the OnInitialized methods.
-		fireOnInitialized();
+		Collection<Bean<?>> allBeans = beanIndexer.getAllBeans();
+		allBeans.forEach(Bean::fireOnInitializedMethods);
+
+		// Notify all listeners that the various beans are done.
+		allBeans.forEach(this::fireBeanListenersPostInjected);
 	}
 
-	private void loadExternallyInjectedBeans() {
+	private void loadExternalObjects() {
+		List<BeanListener> beanListeners  = new ArrayList<>();
 		for (String externalPackage : externalPackages) {
 			Reflections reflections = new Reflections(externalPackage);
-			Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(Inject.class);
+			loadBeanListeners(reflections, beanListeners);
+		}
+		this.beanListeners = beanListeners;
 
-			for (Class<?> annotatedType : typesAnnotatedWith) {
-				indexType(annotatedType);
+		for (String externalPackage : externalPackages) {
+			Reflections reflections = new Reflections(externalPackage);
+			loadExternallyInjectedBeans(reflections);
+		}
+	}
+
+	private void loadBeanListeners(Reflections reflections, List<BeanListener> allBeanListeners) {
+		Set<Class<? extends BeanListener>> beanListenerClasses = reflections.getSubTypesOf(BeanListener.class);
+		for (Class<? extends BeanListener> beanListenerClass : beanListenerClasses) {
+			try {
+				BeanListener beanListener = beanListenerClass.newInstance();
+
+				String name = beanListener.getClass().getSimpleName();
+				name = Introspector.decapitalize(name);
+
+				beanIndexer.index(beanListenerClass, beanListener, name);
+				allBeanListeners.add(beanListener);
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new ReflectionException("Unable to create bean listener for class " + beanListenerClass, e);
 			}
 		}
+	}
+
+	private void loadExternallyInjectedBeans(Reflections reflections) {
+		Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(Inject.class);
+		typesAnnotatedWith.forEach(this::indexType);
 	}
 
 	private void indexType(Class<?> type) {
@@ -88,12 +117,16 @@ public class AcmsApplication<T> {
 			name = annotation.value();
 		}
 
+		fireBeanListenersPreInitialize(type, name);
+
 		Object instance;
 		try {
 			instance = type.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			throw new ReflectionException("Unable to create instance of external bean " + type, e);
 		}
+
+		instance = fireBeanListenersPostInitialize(type, instance, name);
 
 		beanIndexer.index(type, instance, name);
 
@@ -103,11 +136,6 @@ public class AcmsApplication<T> {
 		} catch (InvocationTargetException | IllegalAccessException e) {
 			throw new ReflectionException("Unable to index bean methods for external bean " + type, e);
 		}
-	}
-
-	private void fireOnInitialized() {
-		Collection<Bean<?>> allBeans = beanIndexer.getAllBeans();
-		allBeans.forEach(Bean::fireOnInitializedMethods);
 	}
 
 	private void indexNestedInjected() {
@@ -189,16 +217,41 @@ public class AcmsApplication<T> {
 			}
 		}
 
-		Object bean = method.invoke(instance, parameterValues);
-
 		String beanName = method.getName();
 		Inject inject = method.getAnnotation(Inject.class);
 		if(inject != null && !inject.value().isEmpty()) {
 			beanName = inject.value();
 		}
+
+		fireBeanListenersPreInitialize(method.getReturnType(), beanName);
+
+		Object bean = method.invoke(instance, parameterValues);
+
+		fireBeanListenersPostInitialize(method.getReturnType(), bean, beanName);
+
 		beanIndexer.index(method.getReturnType(), bean, beanName);
 
 		return true;
+	}
+
+
+	private void fireBeanListenersPreInitialize(Class<?> type, String name) {
+		for (BeanListener beanListener : beanListeners) {
+			beanListener.preInitialize(type, name);
+		}
+	}
+
+	private Object fireBeanListenersPostInitialize(Class<?> type, Object instance, String name) {
+		for (BeanListener beanListener : beanListeners) {
+			instance = beanListener.postInitialize(type, instance, name);
+		}
+		return instance;
+	}
+
+	private void fireBeanListenersPostInjected(Bean<?> bean) {
+		for (BeanListener beanListener : beanListeners) {
+			beanListener.postInjected(bean);
+		}
 	}
 
 	public Class<?> getApplicationClass() {
