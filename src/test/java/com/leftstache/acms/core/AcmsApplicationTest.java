@@ -38,4 +38,13 @@ public class AcmsApplicationTest {
 		assertEquals("missing primitive", 0, instance.getMissingPrimitiveValue());
 		assertEquals("missing object", null, instance.getMissingObject());
 	}
+
+	@Test
+	public void application_onInitialized() {
+		AcmsApplication app = AcmsApplication.run(TestApplication.class);
+		BeanIndexer beanIndexer = app.getBeanIndexer();
+
+		Bean<ComplexObject> complexObject = beanIndexer.getBean(ComplexObject.class, "complexObject");
+		assertEquals("value set OnInitialize", "initialized", complexObject.getInstance().getInitializedOnInit());
+	}
 }

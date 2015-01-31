@@ -58,7 +58,8 @@ public class AcmsApplication<T> {
 	}
 
 	private void fireOnInitialized() {
-
+		Collection<Bean<?>> allBeans = beanIndexer.getAllBeans();
+		allBeans.forEach(Bean::fireOnInitializedMethods);
 	}
 
 	private void indexNestedInjected() {

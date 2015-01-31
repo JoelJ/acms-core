@@ -18,6 +18,13 @@ public class ComplexObject {
 	@Inject
 	private Object missingObject = null;
 
+	private String initializedOnInit = "not initialized :(";
+
+	@OnInitialized
+	public void myOnInit() {
+		initializedOnInit = "initialized";
+	}
+
 	public String getSomeValue() {
 		return someValue;
 	}
@@ -32,5 +39,9 @@ public class ComplexObject {
 
 	public Object getMissingObject() {
 		return missingObject;
+	}
+
+	public String getInitializedOnInit() {
+		return initializedOnInit;
 	}
 }
