@@ -42,7 +42,7 @@ public class AcmsApplication {
 		return acmsApplication;
 	}
 
-	private void start() throws IllegalAccessException, InstantiationException {
+	void start() throws IllegalAccessException, InstantiationException {
 		List<AutoConfigureListener> autoConfigureListeners = new ArrayList<>();
 		for (Class<? extends AutoConfigureListener> autoconfiguredType : autoconfiguredTypes) {
 			autoConfigureListeners.add(autoconfiguredType.newInstance());
