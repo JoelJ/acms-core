@@ -10,4 +10,6 @@ public interface BeanIndexer {
 	void index(Class<?> type, Object bean, String name);
 
 	<T> T getBean(Class<T> type, String name);
+
+	Collection<Object> getAllBeans();
 }

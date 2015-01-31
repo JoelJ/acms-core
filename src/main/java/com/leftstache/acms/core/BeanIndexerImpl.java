@@ -1,5 +1,7 @@
 package com.leftstache.acms.core;
 
+import com.google.common.collect.*;
+
 import java.util.*;
 
 /**
@@ -40,5 +42,16 @@ class BeanIndexerImpl implements BeanIndexer {
 			return (T)byName.get(name);
 		}
 		return null;
+	}
+
+	@Override
+	public Collection<Object> getAllBeans() {
+		List<Object> result = new ArrayList<>();
+
+		for (Map<String, Object> byName : index.values()) {
+			result.addAll(byName.values());
+		}
+
+		return ImmutableList.copyOf(result);
 	}
 }

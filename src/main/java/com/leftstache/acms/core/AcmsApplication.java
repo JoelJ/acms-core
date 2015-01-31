@@ -43,11 +43,42 @@ public class AcmsApplication<T> {
 	void start() {
 		Collection<Method> declaredMethodsRecursively = ReflectionUtils.findDeclaredMethodsRecursively(applicationClass, m -> m.getAnnotation(Inject.class) != null);
 
-		// Collect all the no arg beans first, since they have no dependencies and other beans might depend on it
+		// Index all the method-declared beans
 		try {
 			indexMethods(declaredMethodsRecursively);
 		} catch (InvocationTargetException | IllegalAccessException e) {
 			throw new ReflectionException("Exception while creating beans from methods", e);
+		}
+
+		// Now find all the injected values and make sure their injected values are also injected
+		indexNestedInjected();
+	}
+
+	private void indexNestedInjected() {
+		Collection<Object> allBeans = beanIndexer.getAllBeans();
+
+		for (Object bean : allBeans) {
+			Collection<Field> fields = ReflectionUtils.findDeclaredFieldsRecursively(bean.getClass(), f -> f.getAnnotation(Inject.class) != null);
+			fields.forEach(i -> injectField(bean, i));
+		}
+	}
+
+	private void injectField(Object bean, Field field) {
+		Class<?> type = field.getType();
+		String name = field.getName();
+
+		Inject annotation = field.getAnnotation(Inject.class);
+		if(!annotation.value().isEmpty()) {
+			name = annotation.value();
+		}
+
+		Object beanToInject = beanIndexer.getBean(type, name);
+		if(beanToInject != null) {
+			try {
+				field.set(bean, beanToInject);
+			} catch (IllegalAccessException e) {
+				throw new ReflectionException("Exception while injecting bean with depenencies. Injecting " + bean.getClass().getName() + " with " + beanToInject, e);
+			}
 		}
 	}
 

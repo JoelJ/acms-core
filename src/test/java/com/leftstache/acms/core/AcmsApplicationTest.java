@@ -31,6 +31,9 @@ public class AcmsApplicationTest {
 		ComplexObject complexObject = beanIndexer.getBean(ComplexObject.class, "complexObject");
 		assertNotNull("actual object", complexObject);
 		assertEquals("int value", 10, complexObject.getSomeIntValue());
-		assertEquals("string value", "someValue", complexObject.getSomeIntValue());
+		assertEquals("string value", "this is an injected string", complexObject.getSomeValue());
+
+		assertEquals("missing primitive", 0, complexObject.getMissingPrimitiveValue());
+		assertEquals("missing object", null, complexObject.getMissingObject());
 	}
 }
