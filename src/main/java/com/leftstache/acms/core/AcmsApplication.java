@@ -52,18 +52,25 @@ public class AcmsApplication<T> {
 
 		// Now find all the injected values and make sure their injected values are also injected
 		indexNestedInjected();
+
+		// Done injecting! Fire all the OnInitialized methods.
+		fireOnInitialized();
+	}
+
+	private void fireOnInitialized() {
+
 	}
 
 	private void indexNestedInjected() {
-		Collection<Object> allBeans = beanIndexer.getAllBeans();
+		Collection<Bean<?>> allBeans = beanIndexer.getAllBeans();
 
-		for (Object bean : allBeans) {
-			Collection<Field> fields = ReflectionUtils.findDeclaredFieldsRecursively(bean.getClass(), f -> f.getAnnotation(Inject.class) != null);
+		for (Bean bean : allBeans) {
+			Collection<Field> fields = bean.getInjectedFields();
 			fields.forEach(i -> injectField(bean, i));
 		}
 	}
 
-	private void injectField(Object bean, Field field) {
+	private void injectField(Bean bean, Field field) {
 		Class<?> type = field.getType();
 		String name = field.getName();
 
@@ -72,10 +79,10 @@ public class AcmsApplication<T> {
 			name = annotation.value();
 		}
 
-		Object beanToInject = beanIndexer.getBean(type, name);
+		Bean<?> beanToInject = beanIndexer.getBean(type, name);
 		if(beanToInject != null) {
 			try {
-				field.set(bean, beanToInject);
+				field.set(bean.getInstance(), beanToInject.getInstance());
 			} catch (IllegalAccessException e) {
 				throw new ReflectionException("Exception while injecting bean with depenencies. Injecting " + bean.getClass().getName() + " with " + beanToInject, e);
 			}
@@ -125,11 +132,11 @@ public class AcmsApplication<T> {
 			for (int i = 0; i < parametersDefs.length; i++) {
 				Parameter parameterDef = parametersDefs[i];
 				String parameterName = parameterDef.getName();
-				Object bean = beanIndexer.getBean(parameterDef.getType(), parameterName);
+				Bean bean = beanIndexer.getBean(parameterDef.getType(), parameterName);
 				if (bean == null) {
 					return false; // Uh-oh, we don't have that value yet! Defer until later. Hopefully we'll create it soon!
 				}
-				parameterValues[i] = bean;
+				parameterValues[i] = bean.getInstance();
 			}
 		}
 

@@ -15,12 +15,12 @@ public class AcmsApplicationTest {
 		AcmsApplication app = AcmsApplication.run(TestApplication.class);
 		BeanIndexer beanIndexer = app.getBeanIndexer();
 
-		assertEquals("inject by method name", "this is an injected string", beanIndexer.getBean(String.class, "someValue"));
-		assertEquals("inject by annotation value", "this is by name", beanIndexer.getBean(String.class, "byname"));
-		assertEquals("inject with dependencies", "this is an injected string this is by name", beanIndexer.getBean(String.class, "someDependantValue"));
+		assertEquals("inject by method name", "this is an injected string", beanIndexer.getBean(String.class, "someValue").getInstance());
+		assertEquals("inject by annotation value", "this is by name", beanIndexer.getBean(String.class, "byname").getInstance());
+		assertEquals("inject with dependencies", "this is an injected string this is by name", beanIndexer.getBean(String.class, "someDependantValue").getInstance());
 
-		int someValue = beanIndexer.getBean(int.class, "someValue");
-		assertEquals("inject duplicate by type", 10, someValue);
+		Bean<Integer> someValue = beanIndexer.getBean(int.class, "someValue");
+		assertEquals("inject duplicate by type", 10, (int)someValue.getInstance());
 	}
 
 	@Test
@@ -28,12 +28,14 @@ public class AcmsApplicationTest {
 		AcmsApplication app = AcmsApplication.run(TestApplication.class);
 		BeanIndexer beanIndexer = app.getBeanIndexer();
 
-		ComplexObject complexObject = beanIndexer.getBean(ComplexObject.class, "complexObject");
-		assertNotNull("actual object", complexObject);
-		assertEquals("int value", 10, complexObject.getSomeIntValue());
-		assertEquals("string value", "this is an injected string", complexObject.getSomeValue());
+		Bean<ComplexObject> complexObject = beanIndexer.getBean(ComplexObject.class, "complexObject");
+		ComplexObject instance = complexObject.getInstance();
 
-		assertEquals("missing primitive", 0, complexObject.getMissingPrimitiveValue());
-		assertEquals("missing object", null, complexObject.getMissingObject());
+		assertNotNull("actual object", complexObject);
+		assertEquals("int value", 10, instance.getSomeIntValue());
+		assertEquals("string value", "this is an injected string", instance.getSomeValue());
+
+		assertEquals("missing primitive", 0, instance.getMissingPrimitiveValue());
+		assertEquals("missing object", null, instance.getMissingObject());
 	}
 }
