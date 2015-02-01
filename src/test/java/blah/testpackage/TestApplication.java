@@ -2,7 +2,6 @@ package blah.testpackage;
 
 import com.leftstache.acms.core.*;
 import com.leftstache.acms.core.annotation.*;
-import javafx.application.*;
 
 /**
  * @author Joel Johnson
