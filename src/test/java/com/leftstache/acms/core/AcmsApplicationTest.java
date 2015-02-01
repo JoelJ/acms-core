@@ -96,4 +96,40 @@ public class AcmsApplicationTest {
 		assertFalse("BeanIndexer event", testBeanListener.hasPostInitialized("beanIndexer"));
 		assertTrue("BeanIndexer event", testBeanListener.hasPostInjected("beanIndexer"));
 	}
+
+	@Test
+	public void applicationEvents() {
+		AcmsApplication app = AcmsApplication.run(TestApplication.class);
+		TestApplication application = (TestApplication) app.getApplication();
+
+		boolean[] closeCalled = new boolean[]{ false };
+		new Thread(() -> {
+			try {
+				// give the main thread time to call start
+				while(!app.isStarted()) {
+					Thread.sleep(1);
+				}
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+
+			assertTrue(application.isStartEventCalled());
+			assertFalse(application.isCloseEventCalled());
+
+			closeCalled[0] = true;
+			app.close();
+		}).start();
+
+		assertFalse(application.isStartEventCalled());
+		assertFalse(application.isCloseEventCalled());
+
+		app.start();
+		assertTrue("the close method was called", closeCalled[0]);
+
+		Bean<ApplicationListener> applicationListener = app.getBeanIndexer().getBean(ApplicationListener.class, "applicationListener");
+		assertNotNull(applicationListener);
+
+		assertTrue(application.isStartEventCalled());
+		assertTrue(application.isCloseEventCalled());
+	}
 }

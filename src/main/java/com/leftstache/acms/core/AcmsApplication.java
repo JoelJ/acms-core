@@ -53,25 +53,52 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 
 	/**
 	 * Starts the app. This method returns after {@link #close()} is called.
+	 * Does nothing if start was already called.
 	 */
 	public void start() {
 		if(!started) {
 			synchronized ($lock$) {
 				if(!started) {
 					started = true;
+
+					fireStartApplicationEvent();
+
 					try {
 						Runtime.getRuntime().addShutdownHook(new Thread(this::close));
 						$lock$.wait();
 					} catch (InterruptedException e) {
 						throw new RuntimeException(e);
 					}
+
+					fireCloseApplicationEvent();
 				}
+			}
+		}
+	}
+
+	private void fireCloseApplicationEvent() {
+		Collection<Bean<?>> allBeans = beanIndexer.getAllBeans();
+		for (Bean<?> bean : allBeans) {
+			Object instance = bean.getInstance();
+			if(instance instanceof ApplicationListener) {
+				((ApplicationListener) instance).applicationClose(this);
+			}
+		}
+	}
+
+	private void fireStartApplicationEvent() {
+		Collection<Bean<?>> allBeans = beanIndexer.getAllBeans();
+		for (Bean<?> bean : allBeans) {
+			Object instance = bean.getInstance();
+			if(instance instanceof ApplicationListener) {
+				((ApplicationListener) instance).applicationStart(this);
 			}
 		}
 	}
 
 	/**
 	 * Must be called after {@link #start()}. Will allow the {@link #start()} method to return.
+	 * Does nothing if {@link #start()} was never called.
 	 */
 	public void close() {
 		if(started) {
@@ -81,8 +108,6 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 					started = false;
 				}
 			}
-		} else {
-			throw new AcmsException("Cannot call close before start");
 		}
 	}
 
@@ -303,5 +328,9 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 
 	public BeanIndexer getBeanIndexer() {
 		return beanIndexer;
+	}
+
+	public boolean isStarted() {
+		return started;
 	}
 }

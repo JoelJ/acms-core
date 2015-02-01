@@ -1,6 +1,8 @@
 package blah.testpackage;
 
+import com.leftstache.acms.core.*;
 import com.leftstache.acms.core.annotation.*;
+import javafx.application.*;
 
 /**
  * @author Joel Johnson
@@ -35,5 +37,31 @@ public class TestApplication {
 	@Inject
 	public String includesExternal(String someAutoConfiguredValue) {
 		return "includes external " + someAutoConfiguredValue;
+	}
+
+	private boolean startEventCalled = false;
+	private boolean closeEventCalled = false;
+
+	@Inject
+	public ApplicationListener applicationListener() {
+		return new ApplicationListener() {
+			@Override
+			public void applicationStart(Object application) {
+				startEventCalled = true;
+			}
+
+			@Override
+			public void applicationClose(Object application) {
+				closeEventCalled = true;
+			}
+		};
+	}
+
+	public boolean isStartEventCalled() {
+		return startEventCalled;
+	}
+
+	public boolean isCloseEventCalled() {
+		return closeEventCalled;
 	}
 }
