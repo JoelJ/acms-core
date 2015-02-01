@@ -144,23 +144,6 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 		this.beanListeners = beanIndexer.getAllBeans().stream().filter(bean -> bean.getInstance() instanceof BeanListener).map(bean -> (BeanListener) bean.getInstance()).collect(Collectors.toList());
 	}
 
-	private void loadBeanListeners(Reflections reflections, List<BeanListener> allBeanListeners) {
-		Set<Class<? extends BeanListener>> beanListenerClasses = reflections.getSubTypesOf(BeanListener.class);
-		for (Class<? extends BeanListener> beanListenerClass : beanListenerClasses) {
-			try {
-				BeanListener beanListener = beanListenerClass.newInstance();
-
-				String name = beanListener.getClass().getSimpleName();
-				name = Introspector.decapitalize(name);
-
-				beanIndexer.index(beanListenerClass, beanListener, name);
-				allBeanListeners.add(beanListener);
-			} catch (InstantiationException | IllegalAccessException e) {
-				throw new ReflectionException("Unable to create bean listener for class " + beanListenerClass, e);
-			}
-		}
-	}
-
 	private void loadExternallyInjectedBeans(Reflections reflections) {
 		Set<Class<?>> typesAnnotatedWith = reflections.getTypesAnnotatedWith(Inject.class);
 		typesAnnotatedWith.forEach(this::indexType);
