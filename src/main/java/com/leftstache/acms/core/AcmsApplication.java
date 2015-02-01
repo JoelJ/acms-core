@@ -1,5 +1,6 @@
 package com.leftstache.acms.core;
 
+import com.google.common.collect.*;
 import com.leftstache.acms.core.annotation.*;
 import com.leftstache.acms.core.exception.*;
 import com.leftstache.acms.core.utils.ReflectionUtils;
@@ -40,11 +41,24 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 			throw new NullPointerException("applicationClass");
 		}
 
-		if(applicationClass.getAnnotation(AutoConfiguredApp.class) == null) {
+		AutoConfiguredApp autoConfiguredAppAnnotation = applicationClass.getAnnotation(AutoConfiguredApp.class);
+		if(autoConfiguredAppAnnotation == null) {
 			throw new AcmsException("Unable to initialize app not annotated with AutoConfiguredApp");
 		}
 
+		String[] packages;
+		if(autoConfiguredAppAnnotation.packages().length <= 0) {
+			packages = new String[]{applicationClass.getPackage().getName()};
+		} else {
+			packages = autoConfiguredAppAnnotation.packages();
+		}
+
+
 		Collection<String> externalPackages = ReflectionUtils.findInjectedPackages();
+		externalPackages = ImmutableSet.<String>builder()
+			.addAll(externalPackages)
+			.add(packages)
+			.build();
 
 		AcmsApplication acmsApplication;
 		acmsApplication = new AcmsApplication(applicationClass, new BeanIndexerImpl(), externalPackages);
