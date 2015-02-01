@@ -105,23 +105,24 @@ public class AcmsApplicationTest {
 		boolean[] closeCalled = new boolean[]{ false };
 		new Thread(() -> {
 			try {
-				// give the main thread time to call start
-				while(!app.isStarted()) {
-					Thread.sleep(1);
-				}
+				// give the main thread time to call start, and the events to fire
+				do {
+					Thread.sleep(100);
+				} while(!app.isStarted());
+
+				assertTrue("Start event called", application.isStartEventCalled());
+				assertFalse("Close event not called", application.isCloseEventCalled());
+
+				closeCalled[0] = true;
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
+			} finally {
+				app.close();
 			}
-
-			assertTrue(application.isStartEventCalled());
-			assertFalse(application.isCloseEventCalled());
-
-			closeCalled[0] = true;
-			app.close();
 		}).start();
 
-		assertFalse(application.isStartEventCalled());
-		assertFalse(application.isCloseEventCalled());
+		assertFalse("Start event not called", application.isStartEventCalled());
+		assertFalse("Close event not called", application.isCloseEventCalled());
 
 		app.start();
 		assertTrue("the close method was called", closeCalled[0]);
@@ -129,7 +130,7 @@ public class AcmsApplicationTest {
 		Bean<ApplicationListener> applicationListener = app.getBeanIndexer().getBean(ApplicationListener.class, "applicationListener");
 		assertNotNull(applicationListener);
 
-		assertTrue(application.isStartEventCalled());
-		assertTrue(application.isCloseEventCalled());
+		assertTrue("Start event called", application.isStartEventCalled());
+		assertTrue("Close event called", application.isCloseEventCalled());
 	}
 }
