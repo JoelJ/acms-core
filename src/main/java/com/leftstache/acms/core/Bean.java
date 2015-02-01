@@ -4,8 +4,10 @@ import com.leftstache.acms.core.annotation.*;
 import com.leftstache.acms.core.exception.*;
 import com.leftstache.acms.core.utils.*;
 
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.*;
 
 /**
  * @author Joel Johnson
@@ -54,5 +56,21 @@ public class Bean<T> {
 				throw new ReflectionException("Could not invoke OnInitialized method " + onInitializedMethod.getName() + " for bean instance " + instance, e);
 			}
 		}
+	}
+
+	/**
+	 * @returns true if the bean instance is annotated with the given annotation type.
+	 */
+	public boolean isAnnotatedWith(Class<? extends Annotation> annotationClass) {
+		return this.getInstance().getClass().getAnnotation(annotationClass) != null;
+	}
+
+	public <ANNOTATION extends Annotation> ANNOTATION getTypeAnnotation(Class<ANNOTATION> annotationClass) {
+		return this.getInstance().getClass().getAnnotation(annotationClass);
+	}
+
+	public Collection<Method> getMethods(Predicate<Method> filter) {
+		Class<?> type = getInstance().getClass();
+		return ReflectionUtils.findDeclaredMethodsRecursively(type, filter);
 	}
 }
