@@ -272,6 +272,10 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 			parameterValues = new Object[parametersDefs.length];
 			for (int i = 0; i < parametersDefs.length; i++) {
 				Parameter parameterDef = parametersDefs[i];
+				if(!parameterDef.isNamePresent()) {
+					throw new AcmsException("The application needs to be compiled with the compiler arguement '-parameters'. Refer to acms-core documentation for more information.");
+				}
+
 				String parameterName = parameterDef.getName();
 				Bean bean = beanIndexer.getBean(parameterDef.getType(), parameterName);
 				if (bean == null) {
