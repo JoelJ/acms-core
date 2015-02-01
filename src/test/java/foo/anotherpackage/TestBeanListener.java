@@ -1,12 +1,14 @@
 package foo.anotherpackage;
 
 import com.leftstache.acms.core.*;
+import com.leftstache.acms.core.annotation.*;
 
 import java.util.*;
 
 /**
  * @author Joel Johnson
  */
+@Inject
 public class TestBeanListener implements BeanListener {
 	private Set<String> preInitNames = new HashSet<>();
 	private Set<String> postInitNames = new HashSet<>();

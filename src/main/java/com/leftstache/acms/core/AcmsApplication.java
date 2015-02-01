@@ -9,6 +9,7 @@ import java.beans.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.stream.*;
 
 /**
  * @author Joel Johnson
@@ -135,17 +136,12 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 	}
 
 	private void loadExternalObjects() {
-		List<BeanListener> beanListeners  = new ArrayList<>();
-		for (String externalPackage : externalPackages) {
-			Reflections reflections = new Reflections(externalPackage);
-			loadBeanListeners(reflections, beanListeners);
-		}
-		this.beanListeners = beanListeners;
-
 		for (String externalPackage : externalPackages) {
 			Reflections reflections = new Reflections(externalPackage);
 			loadExternallyInjectedBeans(reflections);
 		}
+
+		this.beanListeners = beanIndexer.getAllBeans().stream().filter(bean -> bean.getInstance() instanceof BeanListener).map(bean -> (BeanListener) bean.getInstance()).collect(Collectors.toList());
 	}
 
 	private void loadBeanListeners(Reflections reflections, List<BeanListener> allBeanListeners) {
@@ -304,21 +300,27 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 
 
 	private void fireBeanListenersPreInitialize(Class<?> type, String name) {
-		for (BeanListener beanListener : beanListeners) {
-			beanListener.preInitialize(type, name);
+		if(beanListeners != null) {
+			for (BeanListener beanListener : beanListeners) {
+				beanListener.preInitialize(type, name);
+			}
 		}
 	}
 
 	private Object fireBeanListenersPostInitialize(Class<?> type, Object instance, String name) {
-		for (BeanListener beanListener : beanListeners) {
-			instance = beanListener.postInitialize(type, instance, name);
+		if(beanListeners != null) {
+			for (BeanListener beanListener : beanListeners) {
+				instance = beanListener.postInitialize(type, instance, name);
+			}
 		}
 		return instance;
 	}
 
 	private void fireBeanListenersPostInjected(Bean<?> bean) {
-		for (BeanListener beanListener : beanListeners) {
-			beanListener.postInjected(bean);
+		if(beanListeners != null) {
+			for (BeanListener beanListener : beanListeners) {
+				beanListener.postInjected(bean);
+			}
 		}
 	}
 
