@@ -41,7 +41,7 @@ public class AcmsApplication<T> implements Closeable, AutoCloseable {
 		}
 
 		if(applicationClass.getAnnotation(AutoConfiguredApp.class) == null) {
-			throw new AcmsException("Unabled to initialize app not annotated with AutoConfiguredApp");
+			throw new AcmsException("Unable to initialize app not annotated with AutoConfiguredApp");
 		}
 
 		Collection<String> externalPackages = ReflectionUtils.findInjectedPackages();
